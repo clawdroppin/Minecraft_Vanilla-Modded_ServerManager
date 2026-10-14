@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: User guide
+    url: https://github.com/clawdroppin/Minecraft_Vanilla-Modded_ServerManager/blob/main/docs/USER_GUIDE.md
+    about: Every screen explained, plus troubleshooting.

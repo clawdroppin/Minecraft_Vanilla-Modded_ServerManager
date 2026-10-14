@@ -1,0 +1,16 @@
+name: Feature request
+description: Suggest something the manager should do
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like?
+      description: Describe what you want to do and why – the problem matters more than the exact solution.
+    validations:
+      required: true
+  - type: input
+    id: server
+    attributes:
+      label: Which server software does it concern?
+      placeholder: e.g. all, Paper, Fabric, NeoForge, modpacks

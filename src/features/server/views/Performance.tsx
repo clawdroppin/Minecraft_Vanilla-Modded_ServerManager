@@ -1,0 +1,204 @@
+import { useState, type ReactNode } from 'react';
+import { Activity, Cpu, Gauge as GaugeIcon, HardDrive, MemoryStick, Network, Users } from 'lucide-react';
+import { bytes, duration, pct } from '@/lib/format';
+import { useServerHistory, useSystemHistory } from '@/lib/live';
+import { useApp, useInstance, useStatus } from '@/store/app';
+import { CoreGrid, Gauge, Legend, LiveChart, SERIES } from '@/components/charts/Charts';
+import { Card, Empty, PageHeader } from '@/components/ui/Surface';
+import { Segmented } from '@/components/ui/Field';
+
+const WINDOWS = { '60': '1m', '300': '5m', '900': '15m', '3600': '1h' } as const;
+type Win = keyof typeof WINDOWS;
+
+function stats(v: number[]) {
+  if (!v.length) return { cur: 0, avg: 0, peak: 0 };
+  let s = 0;
+  let p = 0;
+  for (const x of v) {
+    s += x;
+    if (x > p) p = x;
+  }
+  return { cur: v[v.length - 1], avg: s / v.length, peak: p };
+}
+
+function ChartCard({ title, icon, children, summary }: { title: string; icon: ReactNode; children: ReactNode; summary?: ReactNode }) {
+  return (
+    <Card className="p-4">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-[12.5px] font-semibold text-fg [&_svg]:size-4 [&_svg]:text-fg-3">
+          {icon}
+          {title}
+        </div>
+        {summary}
+      </div>
+      {children}
+    </Card>
+  );
+}
+
+function Summary({ cur, avg, peak, fmt }: { cur: number; avg: number; peak: number; fmt: (v: number) => string }) {
+  return (
+    <div className="flex gap-4 font-mono text-[11px]">
+      <span className="text-fg-4">
+        now <span className="text-fg">{fmt(cur)}</span>
+      </span>
+      <span className="text-fg-4">
+        avg <span className="text-fg-2">{fmt(avg)}</span>
+      </span>
+      <span className="text-fg-4">
+        peak <span className="text-fg-2">{fmt(peak)}</span>
+      </span>
+    </div>
+  );
+}
+
+export function Performance({ id }: { id: string }) {
+  const inst = useInstance(id)!;
+  const st = useStatus(id);
+  const info = useApp((s) => s.info);
+  const all = useServerHistory(id);
+  const sysAll = useSystemHistory();
+  const [win, setWin] = useState<Win>('300');
+  const n = +win;
+  const h = all.slice(-n);
+  const sys = sysAll.slice(-n);
+  const last = all[all.length - 1];
+  const lastSys = sysAll[sysAll.length - 1];
+  const live = st?.state === 'running' || st?.state === 'starting';
+  const ts = h.map((p) => p.ts);
+
+  const cpu = stats(h.map((p) => p.cpu));
+  const mem = stats(h.map((p) => p.mem));
+  const fmtPct = (v: number) => pct(v, v < 10 ? 1 : 0);
+  const fmtB = (v: number) => bytes(v, 1);
+  const fmtR = (v: number) => `${bytes(v, 0)}/s`;
+
+  return (
+    <div className="mx-auto max-w-[1200px] p-6">
+      <PageHeader
+        title="Performance"
+        description="Live TPS, players and resource usage of the server's Java process, sampled every second. History is kept for the last hour while the manager is open."
+        actions={<Segmented value={win} onChange={setWin} options={Object.entries(WINDOWS).map(([value, label]) => ({ value: value as Win, label }))} />}
+      />
+      {!live && all.length === 0 ? (
+        <Card>
+          <Empty icon={<Activity />} title="The server isn't running" description="Start it to see TPS, players, CPU, memory and disk activity in real time." />
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          <div className="grid grid-cols-4 gap-4">
+            <Card className="p-4">
+              <Gauge value={last?.cpu ?? 0} label="Server CPU" sub={`of ${info?.cores ?? '?'} cores`} />
+            </Card>
+            <Card className="p-4">
+              <Gauge value={((last?.mem ?? 0) / (inst.java.maxMemMb * 1048576)) * 100} label="Server memory" sub={`${bytes(last?.mem ?? 0)} of ${bytes(inst.java.maxMemMb * 1048576, 0)} heap limit`} />
+            </Card>
+            <Card className="p-4">
+              <Gauge value={lastSys?.cpu ?? 0} label="System CPU" sub="all processes" />
+            </Card>
+            <Card className="p-4">
+              <Gauge value={lastSys ? (lastSys.memUsed / lastSys.memTotal) * 100 : 0} label="System memory" sub={lastSys ? `${bytes(lastSys.memUsed)} / ${bytes(lastSys.memTotal)}` : ''} />
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <ChartCard
+              title="Ticks per second"
+              icon={<GaugeIcon />}
+              summary={<Summary {...stats(h.map((p) => p.tps ?? 0))} fmt={(v) => v.toFixed(1)} />}
+            >
+              <LiveChart ts={ts} series={[{ name: 'TPS', values: h.map((p) => p.tps ?? 0) }]} format={(v) => v.toFixed(1)} max={20} />
+              <div className="mt-2 text-[11px] text-fg-4">
+                {st?.mspt != null ? `${st.mspt.toFixed(1)} ms per tick right now (50 ms = the limit for 20 TPS). ` : ''}
+                {inst.network.rconEnabled ? 'Measured over RCON every 10 seconds.' : 'Turn RCON on (Server Settings → Network) to measure TPS.'}
+              </div>
+            </ChartCard>
+            <ChartCard title="Players online" icon={<Users />} summary={<Summary {...stats(h.map((p) => p.players))} fmt={(v) => v.toFixed(0)} />}>
+              <LiveChart ts={ts} series={[{ name: 'Players', values: h.map((p) => p.players) }]} format={(v) => v.toFixed(0)} />
+            </ChartCard>
+            <ChartCard title="CPU usage" icon={<Cpu />} summary={<Summary {...cpu} fmt={fmtPct} />}>
+              <LiveChart ts={ts} series={[{ name: 'CPU', values: h.map((p) => p.cpu) }]} format={fmtPct} />
+            </ChartCard>
+            <ChartCard title="Memory (working set)" icon={<MemoryStick />} summary={<Summary {...mem} fmt={fmtB} />}>
+              <LiveChart ts={ts} series={[{ name: 'Memory', values: h.map((p) => p.mem) }]} format={fmtB} />
+              {inst.automation.memoryLimitMb > 0 && (
+                <div className="mt-2 text-[11px] text-fg-4">Automatic restart above {bytes(inst.automation.memoryLimitMb * 1048576)} is enabled.</div>
+              )}
+            </ChartCard>
+            <ChartCard
+              title="Disk activity"
+              icon={<HardDrive />}
+              summary={
+                <Legend
+                  items={[
+                    { name: 'Read', color: SERIES[1], value: fmtR(last?.readBps ?? 0) },
+                    { name: 'Write', color: SERIES[0], value: fmtR(last?.writeBps ?? 0) },
+                  ]}
+                />
+              }
+            >
+              <LiveChart
+                ts={ts}
+                series={[
+                  { name: 'Write', values: h.map((p) => p.writeBps), color: SERIES[0] },
+                  { name: 'Read', values: h.map((p) => p.readBps), color: SERIES[1] },
+                ]}
+                format={fmtR}
+              />
+            </ChartCard>
+            <ChartCard
+              title="Network (whole PC)"
+              icon={<Network />}
+              summary={
+                <Legend
+                  items={[
+                    { name: 'In', color: SERIES[1], value: fmtR(lastSys?.rxBps ?? 0) },
+                    { name: 'Out', color: SERIES[0], value: fmtR(lastSys?.txBps ?? 0) },
+                  ]}
+                />
+              }
+            >
+              <LiveChart
+                ts={sys.map((p) => p.ts)}
+                series={[
+                  { name: 'Out', values: sys.map((p) => p.txBps), color: SERIES[0] },
+                  { name: 'In', values: sys.map((p) => p.rxBps), color: SERIES[1] },
+                ]}
+                format={fmtR}
+              />
+              <div className="mt-2 text-[11px] text-fg-4">Windows doesn't expose per-process network counters, so this is all traffic on this PC.</div>
+            </ChartCard>
+          </div>
+
+          <div className="grid grid-cols-[1fr_360px] gap-4">
+            <Card className="p-4">
+              <div className="mb-3 flex items-center justify-between text-[12.5px] font-semibold text-fg">
+                CPU cores (system)
+                <span className="font-mono text-[11px] font-normal text-fg-4">{lastSys?.perCore.length ?? 0} logical cores</span>
+              </div>
+              <CoreGrid values={lastSys?.perCore ?? []} />
+              {inst.java.affinity.length > 0 && <div className="mt-2 text-[11px] text-fg-4">Server pinned to cores {inst.java.affinity.join(', ')}.</div>}
+            </Card>
+            <Card className="p-4">
+              <div className="mb-2 text-[12.5px] font-semibold text-fg">Process</div>
+              <dl className="grid grid-cols-2 gap-y-1.5 text-[12px]">
+                <dt className="text-fg-3">PID</dt>
+                <dd className="text-right font-mono text-fg">{st?.pid ?? '—'}</dd>
+                <dt className="text-fg-3">Uptime</dt>
+                <dd className="text-right font-mono text-fg">{last?.uptime ? duration(last.uptime) : '—'}</dd>
+                <dt className="text-fg-3">Priority</dt>
+                <dd className="text-right font-mono text-fg">{inst.java.priority}</dd>
+                <dt className="text-fg-3">Peak memory</dt>
+                <dd className="text-right font-mono text-fg">{bytes(stats(all.map((p) => p.mem)).peak)}</dd>
+                <dt className="text-fg-3">Garbage collector</dt>
+                <dd className="text-right font-mono text-fg">{inst.java.gcPreset}</dd>
+                <dt className="text-fg-3">Version</dt>
+                <dd className="truncate text-right font-mono text-fg">{st?.runningVersion ?? '—'}</dd>
+              </dl>
+            </Card>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

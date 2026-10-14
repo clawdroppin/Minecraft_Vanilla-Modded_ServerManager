@@ -1,0 +1,181 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/jetbrains-mono';
+
+@theme {
+  --font-sans: 'Inter Variable', 'Segoe UI Variable', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'Cascadia Code', Consolas, monospace;
+
+  /* Deep-slate surfaces with a hint of moss */
+  --color-bg: #080b0a;
+  --color-bg-raised: #0c100e;
+  --color-panel: #111614;
+  --color-panel-2: #161d1a;
+  --color-hover: #1d2622;
+  --color-line: #222c28;
+  --color-line-strong: #2f3b36;
+  --color-fg: #eef5f1;
+  --color-fg-2: #a9b8b1;
+  --color-fg-3: #7a8a83;
+  --color-fg-4: #53625c;
+
+  /* Grass accent, diamond + gold secondaries */
+  --color-accent: #4ade80;
+  --color-accent-strong: #22c55e;
+  --color-accent-deep: #15803d;
+  --color-accent-dim: #0f2e1d;
+  --color-gold: #fbbf24;
+  --color-diamond: #5eead4;
+  --color-ok: #4ade80;
+  --color-warn: #facc15;
+  --color-err: #f87171;
+  --color-info: #60a5fa;
+  --color-violet: #a78bfa;
+
+  --radius-xl: 14px;
+  --shadow-pop: 0 18px 50px -12px rgb(0 0 0 / 0.7), 0 0 0 1px rgb(220 252 231 / 0.06);
+  --shadow-glow: 0 0 0 1px rgb(34 197 94 / 0.35), 0 8px 30px -8px rgb(34 197 94 / 0.45);
+
+  --animate-pulse-soft: pulse-soft 2s ease-in-out infinite;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-spin-slow: spin 3s linear infinite;
+
+  @keyframes pulse-soft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  @keyframes shimmer {
+    from { background-position: -200% 0; }
+    to { background-position: 200% 0; }
+  }
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    background: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    font-feature-settings: 'cv11', 'ss01', 'ss03';
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+    user-select: none;
+    font-size: 13px;
+  }
+  input,
+  textarea,
+  [contenteditable],
+  .selectable {
+    user-select: text;
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--color-accent) 35%, transparent);
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #2c3a34 transparent;
+  }
+  :focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--color-accent) 70%, transparent);
+    outline-offset: 2px;
+  }
+  button {
+    cursor: default;
+  }
+  input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+  }
+}
+
+@utility glass {
+  background: color-mix(in srgb, var(--color-panel) 82%, transparent);
+  backdrop-filter: blur(14px) saturate(140%);
+}
+
+@utility text-grass {
+  background: linear-gradient(135deg, #bbf7d0 0%, #4ade80 45%, #22c55e 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@utility bg-grass {
+  background-image: linear-gradient(135deg, #4ade80 0%, #22c55e 50%, #16a34a 100%);
+}
+
+@utility shimmer-bar {
+  background-image: linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--color-accent) 55%, transparent) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: var(--animate-shimmer);
+}
+
+@utility grass-grid {
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgb(34 197 94 / 0.12), transparent 70%),
+    linear-gradient(rgb(220 252 231 / 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(220 252 231 / 0.025) 1px, transparent 1px);
+  background-size: 100% 100%, 32px 32px, 32px 32px;
+}
+
+/* Range input – the Slider component draws the track */
+input[type='range'].range {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  height: 22px;
+  width: 100%;
+}
+input[type='range'].range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: transparent;
+}
+input[type='range'].range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 14px;
+  width: 14px;
+  margin-top: -5px;
+  border-radius: 999px;
+  background: #f0fdf4;
+  border: 3px solid var(--color-accent-strong);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 18%, transparent);
+  transition: transform 120ms ease;
+}
+input[type='range'].range:active::-webkit-slider-thumb {
+  transform: scale(1.18);
+}
+
+.cm-editor {
+  height: 100%;
+  font-size: 12.5px;
+}
+.cm-editor .cm-scroller {
+  font-family: var(--font-mono);
+  line-height: 1.6;
+}
+.cm-editor.cm-focused {
+  outline: none;
+}
+
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  transition-duration: 0.001ms !important;
+}
+
+/* Blocky "pixel" backdrop for hero areas */
+@utility pixel-dirt {
+  background-image:
+    linear-gradient(180deg, rgb(34 197 94 / 0.14) 0 6px, transparent 6px),
+    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.018) 0 8px, transparent 8px 16px),
+    repeating-linear-gradient(0deg, rgb(255 255 255 / 0.018) 0 8px, transparent 8px 16px);
+}
+
+/* Minecraft formatting codes in MOTD previews */
+.mc-text { font-family: var(--font-mono); text-shadow: 1px 1px 0 rgb(0 0 0 / 0.55); }
+.mc-obf { filter: blur(0.6px); }
