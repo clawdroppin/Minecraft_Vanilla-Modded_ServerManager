@@ -1,4 +1,4 @@
-import { invoke as tauriInvoke, isTauri } from '@tauri-apps/api/core';
+import { Channel, invoke as tauriInvoke, isTauri } from '@tauri-apps/api/core';
 import { listen as tauriListen } from '@tauri-apps/api/event';
 import type * as T from './types';
 
@@ -160,6 +160,17 @@ export const api = {
 
   diagnostics: (id: string) => invoke<T.DiagCheck[]>('run_diagnostics', { id }),
   diskUsage: (id: string) => invoke<T.DiskUsage>('disk_usage', { id }),
+  listDir: (id: string, rel: string) => invoke<T.DirEntry[]>('list_dir', { id, rel }),
+
+  aiModels: (settings: T.AiSettings) => invoke<string[]>('ai_models', { settings }),
+  /** Streams one completion; resolves to an id for aiStop. */
+  aiChat: (settings: T.AiSettings, messages: unknown[], tools: unknown[], onEvent: (e: T.AiEvent) => void) => {
+    if (mock) return invoke<number>('ai_chat', { settings, messages, tools, onEvent });
+    const channel = new Channel<T.AiEvent>();
+    channel.onmessage = onEvent;
+    return invoke<number>('ai_chat', { settings, messages, tools, channel });
+  },
+  aiStop: (id: number) => invoke<void>('ai_stop', { id }),
 };
 
 export function errMsg(e: unknown): string {

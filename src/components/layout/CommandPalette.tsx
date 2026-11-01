@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Command } from 'cmdk';
 import { AnimatePresence, motion } from 'motion/react';
-import { Download, Home, Play, Plus, RotateCw, Search, Server, Settings, Square } from 'lucide-react';
+import { Bot, Download, Home, Play, Plus, RotateCw, Search, Server, Settings, Square } from 'lucide-react';
 import { api, errMsg } from '@/lib/ipc';
 import { useApp, type ViewId } from '@/store/app';
 import { VIEWS } from '@/features/server/views';
@@ -103,6 +103,9 @@ export function CommandPalette() {
                   </Command.Item>
                   <Command.Item value="import server pack folder" className={item} onSelect={() => run(() => setDialog({ kind: 'import' }))}>
                     <Download /> Import a server
+                  </Command.Item>
+                  <Command.Item value="ai assistant chat help local llm ollama" className={item} onSelect={() => run(() => useApp.getState().askAi())}>
+                    <Bot /> AI assistant
                   </Command.Item>
                   <Command.Item value="app settings preferences java curseforge" className={item} onSelect={() => run(() => setDialog({ kind: 'settings' }))}>
                     <Settings /> App settings

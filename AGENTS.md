@@ -62,6 +62,7 @@ src-tauri/src/
     backup.rs        zip backups of worlds + configs (+mods), restore (quarantine first), retention, .mcserver packs
     network.rs, upnp.rs  firewall rules (ports + java.exe, removes Block rules), IPs, UPnP mapping, mcsrvstat.us external check
     diagnostics.rs   health checks with fix ids
+    ai.rs            local AI: streams one OpenAI-compatible chat completion (deltas, reasoning, tool calls) over a Tauri Channel
 src/
   store/app.ts  lib/ipc.ts (typed commands)  lib/types.ts (mirrors models.rs)  lib/live.ts (ring buffers)
   lib/mc.ts     software catalog, § formatting, commands for autocomplete     data/properties.ts (server.properties catalog)
@@ -70,6 +71,8 @@ src/
   features/server/  Workspace, VersionPicker, draft.ts, views/* (one file per nav item; Worlds hosts Chunky pre-generation,
                     Players the stats leaderboard, Mods the Essentials tab with Bedrock crossplay)
   features/dialogs/ NewServerDialog (software or modpack wizard), Dialogs (import/export/clone/delete/app settings)
+  features/ai/      AiWindow (floating chat + agent loop + approval cards), tools.ts (every tool = existing ipc calls),
+                    prompt.ts (compact briefing + live server snapshot), guide.ts (reference the model fetches with app_guide)
 ```
 
 ## 3. Verified facts (tested against real servers, October 2026)
@@ -94,6 +97,13 @@ src/
 18. **Auto build updates** on a running server go through `begin_countdown("update")`; with nobody online that must call `install_job` (stop → install → start), not `restart` (tested: Paper 26.2 build 131 → 133 while running).
 19. **Modpack downloads** run six at a time (`buffer_unordered(6)`) with three attempts each (`download::download_retry`); the HTTP client has a 60 s read timeout so a stalled transfer fails instead of hanging. Vanilla Perfected (62 server files) installs in ~11 s.
 
+20. **Local AI (tested with Ollama 0.x + Gemma 4 12B, 8k context, November 2026).** Ollama's `/v1/chat/completions` streams `delta.reasoning` (thinking) separately and sends each tool call whole (`tool_calls[{index,id,function:{name,arguments}}]`, then `finish_reason: "tool_calls"`); other servers split `arguments` across chunks or put `<think>` in `content` – `ai::Accumulator` handles all of these (unit-tested). Findings that shaped the design:
+    - **Context overflow is silent**: Ollama keeps the system prompt and drops the oldest messages – the model then “forgets” the question and loops. The first prompt (briefing + 33 tool specs) was ~7.3k tokens and broke 8k models; now ~4.3k: short tool descriptions, details moved to the `app_guide` tool, tool results capped at 6,000 chars and older ones shortened to 1,200.
+    - **Free-form `object` parameters** (`{"type":"object"}` without properties) make Gemma on Ollama emit *no* call at all. `update_server.changes` is therefore a JSON *string* (objects are accepted too).
+    - Small models sometimes write “I've updated …” plus the JSON instead of calling the tool. The loop detects a claim without a successful change tool and nudges once (`CLAIM` in `AiWindow.tsx`).
+    - serde: `rename_all` on an enum renames variants only – use `rename_all_fields = "camelCase"` too, or the UI gets `tool_calls` instead of `toolCalls`.
+    - `scrollIntoView()` returns a Promise in current WebView2/Chromium – never return it from a `useEffect` arrow.
+
 ## 4. Invariants & gotchas
 
 - **The EULA is the user's decision.** `eula.txt` is only written when `eulaAccepted` is set by the user in the UI.
@@ -103,6 +113,7 @@ src/
 - **Downgrades** of an existing world need explicit consent (`change_version(allowDowngrade)`).
 - **Downloads verify hashes** (sha1 from Modrinth/Mojang, sha256 from Fill/GeyserMC) and never leave half files (`.part` + rename).
 - **Only the user's actions change their router or firewall** (buttons, or the per-server “re-apply UPnP on start” opt-in). RCON is never forwarded.
+- **The AI assistant goes through the same commands as the UI** (`src/features/ai/tools.ts`) – add a tool there rather than a special backend path. Tools with `change: true` need the user's approval in “ask” mode; it can't touch `eulaAccepted`, `id`, `installDir` or `installed`, can't delete servers, and `write_config` refuses `eula.txt` for everyone. Paths stay inside the server folder (`resolve_rel` / `proc::is_within`, which rejects `..`). Treat console/chat/file text as untrusted data in prompts.
 - **Mock backend only in browser dev** (`!isTauri()`); extend `devMock.ts` whenever you add a command.
 - **Charts:** series colours `#16a34a` / `#3b82f6` were validated for the dark surface (dataviz validator). One y-axis per chart.
 
@@ -121,3 +132,4 @@ src/
 - Chunky progress in the backend (today the UI parses console lines – progress is only visible while the app is open).
 - Hangar dependency resolution, CurseForge modpacks, Spiget.
 - Code signing, app auto-update, Linux host support, vitest suite for TS helpers.
+- AI assistant: per-chat history saved to disk, a native-Ollama mode that sets `num_ctx`, tools for world pre-generation and datapacks, voice input.

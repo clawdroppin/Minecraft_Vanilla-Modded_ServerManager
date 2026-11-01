@@ -276,7 +276,8 @@ fn zip_worlds(zip_path: &Path) -> Vec<String> {
     let mut out: Vec<String> = z
         .file_names()
         .filter_map(|n| n.ok().and_then(|n| n.strip_prefix("worlds/").and_then(|r| r.split('/').next()).map(String::from)))
-        .filter(|n| !n.is_empty())
+        // A crafted archive could name "worlds/../…" – that would act on the parent folder.
+        .filter(|n| !n.is_empty() && n != "." && n != ".." && !n.contains(['\\', ':']))
         .collect();
     out.sort();
     out.dedup();

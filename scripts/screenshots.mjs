@@ -56,16 +56,29 @@ const shots = [
   { name: 'health', view: 'health' },
   { name: 'essentials', view: 'mods', click: 'Essentials' },
   { name: 'player-stats', view: 'players', click: 'Stats' },
+  { name: 'assistant', view: 'performance', wait: 6000, ask: 'The server lags when people explore. Find out why and fix it.' },
 ];
 for (const s of shots) {
   const sid = s.server ?? SERVER;
   const ui = s.active === 'home' ? { tabs: [SERVER], active: 'home', views: {} } : { tabs: [SERVER, 'a1b2c3d4-0002'], active: sid, views: { [sid]: s.view } };
-  await evaluate(`localStorage.setItem('mcsm.ui', ${JSON.stringify(JSON.stringify(ui))}); location.reload();`);
+  // The AI window reads its position on load.
+  const aiGeom = `localStorage.setItem('mcsm.ai.window', JSON.stringify({ x: innerWidth - 500, y: 56, w: 480, h: innerHeight - 76 }));`;
+  await evaluate(`localStorage.setItem('mcsm.ui', ${JSON.stringify(JSON.stringify(ui))}); ${aiGeom} location.reload();`);
   await sleep(s.wait ?? 3500);
   if (s.click) {
     // Inner tabs (Segmented buttons) live in component state – click them like a user would.
     await evaluate(`[...document.querySelectorAll('button')].find((b) => b.textContent.trim().startsWith(${JSON.stringify(s.click)}))?.click()`);
     await sleep(s.clickWait ?? 4000);
+  }
+  if (s.ask) {
+    // The AI window (mock model): open it, place it, send a question and wait for the approval card.
+    await evaluate(`window.dispatchEvent(new KeyboardEvent('keydown', { key: 'j', ctrlKey: true }))`);
+    await sleep(800);
+    await evaluate(`const ta = document.querySelector('textarea[placeholder^="Ask anything"]');
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(ta, ${JSON.stringify(s.ask)});
+      ta.dispatchEvent(new Event('input', { bubbles: true }));
+      setTimeout(() => [...document.querySelectorAll('button')].find((b) => b.textContent.trim() === 'Send').click(), 100)`);
+    await sleep(9000);
   }
   const r = await send('Page.captureScreenshot', { format: 'png' });
   writeFileSync(join(out, `${s.name}.png`), Buffer.from(r.result.data, 'base64'));

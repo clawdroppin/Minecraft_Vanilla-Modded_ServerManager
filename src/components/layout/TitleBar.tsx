@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { Command, Copy, Minus, Square, X } from 'lucide-react';
+import { Bot, Command, Copy, Minus, Square, X } from 'lucide-react';
 import { inTauri } from '@/lib/ipc';
 import { useApp } from '@/store/app';
 import { Kbd } from '@/components/ui/Surface';
@@ -9,6 +9,7 @@ import { GrassBlock } from '@/components/ui/Mc';
 export function TitleBar() {
   const [max, setMax] = useState(false);
   const setPalette = useApp((s) => s.setPalette);
+  const aiOpen = useApp((s) => s.aiOpen);
   const win = inTauri() ? getCurrentWindow() : null;
   useEffect(() => {
     if (!win) return;
@@ -40,6 +41,13 @@ export function TitleBar() {
           </span>
         </button>
       </div>
+      <button
+        onClick={() => useApp.getState().setAiOpen(!useApp.getState().aiOpen)}
+        title="AI assistant (Ctrl+J)"
+        className={`mr-1 flex h-7 items-center gap-1.5 rounded-lg px-2.5 text-[12px] transition-colors ${aiOpen ? 'bg-accent-dim text-fg' : 'text-fg-3 hover:bg-hover hover:text-fg'}`}
+      >
+        <Bot className="size-4 text-accent" /> Assistant
+      </button>
       {win && (
         <div className="flex h-full">
           <button onClick={() => win.minimize()} className="flex h-full w-11 items-center justify-center text-fg-3 hover:bg-hover hover:text-fg">

@@ -1,3 +1,4 @@
+pub mod ai;
 pub mod backup;
 pub mod diagnostics;
 pub mod download;

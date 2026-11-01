@@ -13,6 +13,7 @@ import { confirm, ConfirmHost } from '@/components/ui/Dialog';
 import { Dashboard } from '@/features/dashboard/Dashboard';
 import { Workspace } from '@/features/server/Workspace';
 import { NewServerDialog } from '@/features/dialogs/NewServerDialog';
+import { AiWindow } from '@/features/ai/AiWindow';
 import { AppSettingsDialog, CloneDialog, DeleteDialog, ExportDialog, ImportDialog } from '@/features/dialogs/Dialogs';
 
 function useShortcuts() {
@@ -21,7 +22,10 @@ function useShortcuts() {
       if (!e.ctrlKey) return;
       const s = useApp.getState();
       const k = e.key.toLowerCase();
-      if (k === 'n') {
+      if (k === 'j') {
+        e.preventDefault();
+        s.setAiOpen(!s.aiOpen);
+      } else if (k === 'n') {
         e.preventDefault();
         s.setDialog({ kind: 'new' });
       } else if (k === 'w' && s.active !== 'home') {
@@ -124,6 +128,7 @@ export function App() {
       <DeleteDialog />
       <AppSettingsDialog />
       <CommandPalette />
+      <AiWindow />
       <ConfirmHost />
       <Toaster />
       <TaskTray />

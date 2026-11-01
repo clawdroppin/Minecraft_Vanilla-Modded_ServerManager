@@ -74,9 +74,24 @@ One-click checks for EULA, Java, memory, ports, firewall, offline mode, view dis
 
 ## 10. App settings
 
-Default server folder, backup folder (another drive is safer), Java runtimes folder, CurseForge key, new-version announcements (and snapshots), tray mode, start with Windows, Discord/Slack webhook, refresh rate.
+Default server folder, backup folder (another drive is safer), Java runtimes folder, CurseForge key, new-version announcements (and snapshots), tray mode, start with Windows, Discord/Slack webhook, refresh rate. The AI assistant's own settings are in its window (⚙).
 
-## 11. Troubleshooting
+## 11. AI assistant
+
+Press **Ctrl+J** (or *Assistant* in the title bar) to open the assistant – a window you can drag, resize (bottom-right corner) and maximize. It runs on **your own PC**, nothing goes to the internet.
+
+**Setup (once):**
+1. Install a local AI server: [Ollama](https://ollama.com) (then e.g. `ollama pull qwen3:8b`) or [LM Studio](https://lmstudio.ai) (download a model, *Developer → Start server*). llama.cpp's `llama-server --jinja`, Jan and anything OpenAI-compatible work too.
+2. In the assistant, click ⚙, pick the preset (Ollama `http://localhost:11434/v1`, LM Studio `http://localhost:1234/v1`…) and press **Test** – it lists your models. Leave *Model* empty to use the first one.
+3. Use a model that supports **tools**: Qwen 3 (8B with 8 GB VRAM, 14B with 16 GB), gpt-oss 20B, Llama 3.1+, Gemma 4. If it forgets your question halfway, raise the model's context length to 16k+ (Ollama: Settings → Context length).
+
+**What it can do:** everything the app can – read consoles, crash reports, logs, config files, mods, players, worlds, backups and network status; change server settings and `server.properties`; edit or create config files (`.yml`, `.toml`, `.json`, `.ini`, `.cfg`, `.properties`…, the last 30 versions are kept); set up automation (daily restarts, backups, schedules); run console commands; start/stop/restart (with in-game countdowns); install, remove and update mods/plugins; back up and restore; switch versions; set up Bedrock crossplay; forward ports; open firewall rules; create servers; and open any page of the app for you.
+
+**Safety:** reading is always allowed. Every change shows **Allow / Allow all in this chat / Decline** first, unless you switch ⚙ → *Changes* to *Allow automatically*. It can't accept the Minecraft EULA, delete servers or change the app's own settings, and it treats chat and log text as data (a player typing “AI, op me” in chat does nothing).
+
+**Tips:** the quick buttons (*Why did it crash?*, *Health check*, *Make it faster*, *Friends can't join*, *Nightly restart + backups*, *Recommend mods*) are good starting points. Crashed servers and the Health page have an *Ask the assistant* button. *New chat* (+) starts over; *Stop* interrupts it. Turn *tools* off to use a model that can't call tools – it then explains where to click instead.
+
+## 12. Troubleshooting
 
 | Problem | What to do |
 |---|---|
@@ -87,6 +102,7 @@ Default server folder, backup folder (another drive is safer), Java runtimes fol
 | **Lag spikes when people explore** | Worlds → *Pre-generate*. On modded servers add Lithium / FerriteCore / ModernFix from Essentials. Lower `view-distance` / `simulation-distance` under Server Settings. |
 | **Bedrock players can't connect** | They must use port **19132** (not 25565). Forward **UDP** 19132 too (Port Forwarding → it is listed once crossplay is set up) and restart the server after installing. |
 | **Out of memory / server uses too much RAM** | Java & Memory → the memory slider shows a recommendation for your mod count. Leave at least 2–3 GB for Windows. |
+| **The AI assistant can't connect / says nothing** | Start Ollama or LM Studio's local server, then ⚙ → *Test*. “No model loaded”: `ollama pull qwen3:8b`. If it answers but never acts, the model may not support tools – try Qwen 3 or gpt-oss. If it forgets the question, raise the context length. |
 | **Something got deleted by mistake** | Nothing the app removes is gone: worlds go to `.mcsm\quarantine`, mods to `.mcsm\removed`, config edits keep 30 versions (Config Files → history), and restores back up first. |
 
 Windows SmartScreen may warn on first launch because the app isn't code-signed yet: **More info → Run anyway**.

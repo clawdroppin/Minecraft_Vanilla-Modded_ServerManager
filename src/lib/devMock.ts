@@ -116,6 +116,7 @@ let settings: AppSettings = {
   webhookUrl: '',
   webhookLevels: ['success', 'error'],
   curseforgeKey: '',
+  ai: { baseUrl: 'http://localhost:11434/v1', model: '', apiKey: '', temperature: 0.3, approval: 'ask', tools: true },
 };
 
 const RELEASES = ['26.3', '26.2', '26.1.2', '26.1.1', '26.1', '1.21.11', '1.21.10', '1.21.8', '1.21.4', '1.21.1', '1.21', '1.20.6', '1.20.4', '1.20.1', '1.19.4', '1.19.2', '1.18.2', '1.17.1', '1.16.5', '1.15.2', '1.14.4', '1.12.2', '1.8.9', '1.7.10'];
@@ -170,7 +171,7 @@ const LOG = [
 export function installDevMock() {
   const find = (id: unknown) => instances.find((i) => i.id === id)!;
   installMock({
-    get_app_info: () => ({ version: '1.1.0', dataDir: 'C:\\Users\\me\\AppData\\Roaming\\com.minecraftservermanager.app', portable: false, cores: 16, totalMemory: 34359738368, os: 'Windows 11 Pro', hostname: 'GAMING-PC' }),
+    get_app_info: () => ({ version: '1.2.0', dataDir: 'C:\\Users\\me\\AppData\\Roaming\\com.minecraftservermanager.app', portable: false, cores: 16, totalMemory: 34359738368, os: 'Windows 11 Pro', hostname: 'GAMING-PC' }),
     get_settings: () => settings,
     save_settings: ({ settings: s }) => void (settings = s as AppSettings),
     list_instances: () => instances,
@@ -280,6 +281,36 @@ export function installDevMock() {
       known: players.map((p) => ({ name: p.name, uuid: p.uuid, expiresOn: '2026-11-13 12:00:00 +0200' })),
     }),
     player_action: () => undefined,
+    list_dir: () => [
+      { name: 'config', isDir: true, size: 0, modified: now },
+      { name: 'mods', isDir: true, size: 0, modified: now },
+      { name: 'world', isDir: true, size: 0, modified: now },
+      { name: 'server.properties', isDir: false, size: 1480, modified: now },
+    ],
+    ai_models: () => ['qwen3:8b', 'llama3.1:8b', 'nomic-embed-text'],
+    ai_chat: ({ messages, onEvent }) => {
+      // Fake assistant: reads the console and health checks, explains, then proposes a change.
+      const emit = onEvent as (e: unknown) => void;
+      const tools = (messages as { role: string }[]).filter((m) => m.role === 'tool').length;
+      const done = (toolCalls: unknown[]) => emit({ kind: 'done', toolCalls, finishReason: toolCalls.length ? 'tool_calls' : 'stop', model: 'qwen3:14b' });
+      if (tools === 0) {
+        setTimeout(() => done([{ id: 'c1', name: 'read_console', arguments: '{"lines":150}' }, { id: 'c2', name: 'run_health_check', arguments: '{}' }]), 300);
+        return 1;
+      }
+      const text =
+        tools === 2
+          ? 'Found it – the lag spikes come from **world generation**:\n\n- TPS drops to ~14 whenever someone explores new land\n- `view-distance` is **12**, which loads 625 chunks per player\n- Memory (6 GB) and Java 21 are fine\n\nI suggest lowering the view distance to **8** and pre-generating the world with Chunky. Changing the view distance now:'
+          : 'Done – `view-distance` is now **8**. It applies after the next restart; want me to schedule a restart with a 5-minute warning for your players?';
+      // Two pieces is enough to show streaming (timers are throttled in headless screenshots).
+      const half = text.indexOf(' ', text.length / 2);
+      setTimeout(() => emit({ kind: 'delta', text: text.slice(0, half) }), 150);
+      setTimeout(() => {
+        emit({ kind: 'delta', text: text.slice(half) });
+        done(tools === 2 ? [{ id: 'c3', name: 'update_server', arguments: '{"changes":"{\\"properties\\":{\\"view-distance\\":\\"8\\"}}"}' }] : []);
+      }, 400);
+      return 1;
+    },
+    ai_stop: () => undefined,
     kick_player: () => undefined,
     player_stats: () =>
       players.map((p, i) => ({ uuid: p.uuid, name: p.name, playTicks: [1_512_000, 640_000, 92_000][i], deaths: [14, 6, 1][i], mobKills: [812, 230, 12][i], playerKills: [3, 1, 0][i], distanceCm: [91_000_000, 30_400_000, 2_100_000][i], jumps: [8200, 3100, 400][i], blocksMined: [24_100, 9_800, 640][i], itemsCrafted: [3_400, 1_200, 90][i], lastSeen: now - i * 7200_000 })),

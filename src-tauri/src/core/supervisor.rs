@@ -467,12 +467,17 @@ impl Supervisor {
             }
         }
         if let Some(l) = fatal {
+            let java_hint;
             let hint = if l.contains("BIND TO PORT") {
                 " – another program uses the port. Change it under Server Settings → Network."
             } else if l.contains("EULA") {
                 " – accept the EULA under Server Settings."
             } else if l.contains("UnsupportedClassVersionError") || l.contains("(java)") {
-                " – the Java version is too old for this server. Use automatic Java under Java & Memory."
+                java_hint = match java_needed(&l) {
+                    Some(n) => format!(" – this needs Java {n}. Use automatic Java under Java & Memory (or pick a Java {n} runtime)."),
+                    None => " – the wrong Java version runs this server. Use automatic Java under Java & Memory.".into(),
+                };
+                java_hint.as_str()
             } else if l.contains("reserve enough space") || l.contains("OutOfMemory") {
                 " – lower or raise the memory under Java & Memory."
             } else if l.contains("mods") || l.contains("Mod resolution") {
@@ -950,9 +955,27 @@ pub async fn check_update(state: &Arc<AppState>, app: &AppHandle, id: &str, back
     Ok(info)
 }
 
+/// The Java major an error line asks for: `class file version 69.0` (= Java 25) or
+/// `requires version 21 of '…' (java)`.
+pub fn java_needed(line: &str) -> Option<u32> {
+    static CLASS: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"class file version (\d+)(?:\.\d+)?").unwrap());
+    static REQ: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"requires version (\d+) of").unwrap());
+    if let Some(c) = CLASS.captures(line) {
+        return c[1].parse::<u32>().ok().filter(|v| *v > 44).map(|v| v - 44);
+    }
+    REQ.captures(line).and_then(|c| c[1].parse().ok())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn reads_needed_java() {
+        assert_eq!(java_needed("java.lang.UnsupportedClassVersionError: x has been compiled by a more recent version of the Java Runtime (class file version 69.0), this version only recognizes up to 65.0"), Some(25));
+        assert_eq!(java_needed("Mod cobblemon requires version 21 of 'OpenJDK 64-Bit Server VM' (java), but only the wrong version is present: 25!"), Some(21));
+        assert_eq!(java_needed("nothing here"), None);
+    }
 
     #[test]
     fn parses_log_lines_of_every_flavour() {

@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.2.0 – 2026-11-01
+
+### New
+- **AI assistant** (title bar → *Assistant*, or **Ctrl+J**): a pop-up window that chats with an AI model running on your own PC – Ollama, LM Studio, llama.cpp, Jan or any OpenAI-compatible server. Nothing goes to the internet.
+  - It can use the whole app: read consoles, crash reports, logs, config files, mods, players, worlds, backups and network status; change server settings and `server.properties`, edit or create config files (`.yml`, `.toml`, `.json`, `.ini`, `.cfg`…), set up automation (restarts, backups, schedules), run console commands, start/stop/restart, install/remove/update mods and plugins, make and restore backups, switch versions, set up Bedrock crossplay, forward ports and create servers.
+  - Every change shows an *Allow / Decline* card first (or turn on *Allow automatically*). It can't accept the Minecraft EULA or delete servers.
+  - It gets a briefing on how the app works, plus a live snapshot of your servers, and can look up a detailed reference (every setting, Java rules, common fixes) when it needs it – tuned so 8B–14B models with an 8k context work.
+  - Shows reasoning models' thinking separately, streams answers, Stop button, quick asks (*Why did it crash?*, *Make it faster*, *Friends can't join*…), and *Ask the assistant* buttons on crashed servers and the Health page.
+- Crash notifications for the wrong Java now say which Java the server needs (read from `class file version 69` / `requires version 21` lines).
+
+### Fixed
+- Paths with `..` segments counted as “inside the server folder” (e.g. `D:\srv\mc\..\..\Windows`). They are now refused everywhere – log reading, config files, modpack files.
+- A crafted backup or `.mcserver` pack with a `worlds/../…` entry could make restore/import work on the server's *parent* folder.
+- `eula.txt` can no longer be written through the config editor – the EULA comes only from the checkbox in Server Settings.
+
 ## 1.1.0 – 2026-10-14
 
 ### New

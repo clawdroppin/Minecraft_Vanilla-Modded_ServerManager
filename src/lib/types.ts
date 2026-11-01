@@ -19,6 +19,39 @@ export interface AppSettings {
   webhookUrl: string;
   webhookLevels: string[];
   curseforgeKey: string;
+  ai: AiSettings;
+}
+
+/** Local AI assistant (any OpenAI-compatible server: Ollama, LM Studio, llama.cpp, Jan…). */
+export interface AiSettings {
+  baseUrl: string;
+  /** Empty = the first model the server lists. */
+  model: string;
+  apiKey: string;
+  temperature: number;
+  /** ask = changes need a click first; auto = the assistant may change things on its own. */
+  approval: 'ask' | 'auto' | string;
+  /** Offer the app's tools to the model (off for models without tool support). */
+  tools: boolean;
+}
+
+export interface AiToolCall {
+  id: string;
+  name: string;
+  arguments: string;
+}
+
+export type AiEvent =
+  | { kind: 'delta'; text: string }
+  | { kind: 'thinking'; text: string }
+  | { kind: 'done'; toolCalls: AiToolCall[]; finishReason: string; model: string }
+  | { kind: 'error'; text: string };
+
+export interface DirEntry {
+  name: string;
+  isDir: boolean;
+  size: number;
+  modified: number;
 }
 
 export interface LaunchTarget {

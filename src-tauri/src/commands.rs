@@ -819,6 +819,10 @@ pub struct WriteResult {
 pub async fn write_config(app: AppHandle, state: St<'_>, id: String, rel: String, text: String) -> AppResult<WriteResult> {
     let mut inst = state.instance(&id).await?;
     let path = resolve_rel(&inst, &rel)?;
+    // eula.txt is written from the profile's EULA checkbox only (the user's own decision).
+    if path.file_name().map(|n| n.to_string_lossy().eq_ignore_ascii_case("eula.txt")).unwrap_or(false) {
+        return Err(AppError::msg("eula.txt can't be edited here – accept the EULA under Server Settings."));
+    }
     let hist = inst.meta_dir().join("history");
     let (p2, t2, r2) = (path.clone(), text.clone(), rel.clone());
     blocking(move || {
@@ -1571,4 +1575,49 @@ pub async fn read_image(path: PathBuf) -> AppResult<String> {
     }
     let b = std::fs::read(&path)?;
     Ok(format!("data:{mime};base64,{}", base64::engine::general_purpose::STANDARD.encode(b)))
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DirEntry {
+    name: String,
+    is_dir: bool,
+    size: u64,
+    modified: i64,
+}
+
+/// One folder of the server, relative to its root ("" = the root).
+#[tauri::command]
+pub async fn list_dir(state: St<'_>, id: String, rel: String) -> AppResult<Vec<DirEntry>> {
+    let inst = state.instance(&id).await?;
+    let dir = if rel.trim().is_empty() || rel.trim() == "." { inst.install_dir.clone() } else { resolve_rel(&inst, rel.trim())? };
+    blocking(move || {
+        let mut out: Vec<DirEntry> = std::fs::read_dir(&dir)?
+            .flatten()
+            .filter_map(|e| {
+                let m = e.metadata().ok()?;
+                Some(DirEntry { name: e.file_name().to_string_lossy().into_owned(), is_dir: m.is_dir(), size: m.len(), modified: m.modified().map(ms).unwrap_or(0) })
+            })
+            .collect();
+        out.sort_by(|a, b| b.is_dir.cmp(&a.is_dir).then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase())));
+        out.truncate(500);
+        Ok(out)
+    })
+    .await
+}
+
+#[tauri::command]
+pub async fn ai_models(settings: crate::core::ai::AiSettings) -> AppResult<Vec<String>> {
+    crate::core::ai::list_models(&settings).await.map_err(AppError::msg)
+}
+
+/// Streams one completion on `channel`; returns an id for `ai_stop`.
+#[tauri::command]
+pub fn ai_chat(settings: crate::core::ai::AiSettings, messages: Vec<serde_json::Value>, tools: Vec<serde_json::Value>, channel: tauri::ipc::Channel<crate::core::ai::Event>) -> u64 {
+    crate::core::ai::start_chat(settings, messages, tools, channel)
+}
+
+#[tauri::command]
+pub fn ai_stop(id: u64) {
+    crate::core::ai::stop(id);
 }

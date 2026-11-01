@@ -179,3 +179,19 @@ input[type='range'].range:active::-webkit-slider-thumb {
 /* Minecraft formatting codes in MOTD previews */
 .mc-text { font-family: var(--font-mono); text-shadow: 1px 1px 0 rgb(0 0 0 / 0.55); }
 .mc-obf { filter: blur(0.6px); }
+
+/* Markdown (AI answers) */
+.md { line-height: 1.55; overflow-wrap: anywhere; }
+.md > * + * { margin-top: 0.55em; }
+.md h1, .md h2, .md h3, .md h4 { font-weight: 600; color: var(--color-fg); font-size: 1.04em; margin-top: 0.8em; }
+.md ul { list-style: disc; padding-left: 1.3em; }
+.md ol { list-style: decimal; padding-left: 1.3em; }
+.md li + li { margin-top: 0.2em; }
+.md a { color: var(--color-accent); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.md strong { color: var(--color-fg); font-weight: 600; }
+.md code { font-family: var(--font-mono); font-size: 0.92em; background: var(--color-bg-raised); border: 1px solid var(--color-line); border-radius: 4px; padding: 0 0.3em; }
+.md pre { background: var(--color-bg-raised); border: 1px solid var(--color-line); border-radius: 8px; padding: 0.6em 0.75em; overflow-x: auto; }
+.md pre code { background: none; border: 0; padding: 0; font-size: 11.5px; }
+.md table { border-collapse: collapse; font-size: 0.95em; }
+.md th, .md td { border: 1px solid var(--color-line); padding: 0.2em 0.5em; text-align: left; }
+.md blockquote { border-left: 2px solid var(--color-line-strong); padding-left: 0.7em; color: var(--color-fg-2); }

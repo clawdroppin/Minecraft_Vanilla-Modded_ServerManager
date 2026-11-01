@@ -1,7 +1,7 @@
 {
   "name": "minecraft-server-manager",
   "private": true,
-  "version": "1.1.0",
+  "version": "1.2.0",
   "type": "module",
   "description": "Minecraft server manager – vanilla, Paper, Fabric, Forge, NeoForge and more",
   "license": "MIT",
@@ -30,7 +30,9 @@
     "@uiw/react-codemirror": "^4.25.12",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
+    "dompurify": "^3.4.17",
     "lucide-react": "^1.54.0",
+    "marked": "^18.1.2",
     "motion": "^14.0.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",

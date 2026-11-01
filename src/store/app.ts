@@ -54,6 +54,9 @@ interface AppStore {
   players: Record<string, PlayerEvent[]>;
   dialog: Dialog;
   palette: boolean;
+  /** The AI assistant window, and a question waiting to be sent to it. */
+  aiOpen: boolean;
+  aiAsk: { text: string; seq: number } | null;
 
   init(): Promise<void>;
   refresh(): Promise<void>;
@@ -72,6 +75,9 @@ interface AppStore {
   addPlayerEvent(e: PlayerEvent): void;
   setDialog(d: Dialog): void;
   setPalette(open: boolean): void;
+  setAiOpen(open: boolean): void;
+  /** Opens the assistant and sends `text` (empty = just open). */
+  askAi(text?: string): void;
   saveSettings(s: AppSettings): Promise<void>;
 }
 
@@ -108,6 +114,8 @@ export const useApp = create<AppStore>((set, get) => ({
   players: {},
   dialog: null,
   palette: false,
+  aiOpen: false,
+  aiAsk: null,
 
   async init() {
     const [info, settings, instances, statuses] = await Promise.all([api.appInfo(), api.getSettings(), api.listInstances(), api.getStatuses()]);
@@ -228,6 +236,14 @@ export const useApp = create<AppStore>((set, get) => ({
 
   setPalette(palette) {
     set({ palette });
+  },
+
+  setAiOpen(aiOpen) {
+    set({ aiOpen });
+  },
+
+  askAi(text) {
+    set({ aiOpen: true, aiAsk: text ? { text, seq: (get().aiAsk?.seq ?? 0) + 1 } : get().aiAsk });
   },
 
   async saveSettings(s) {

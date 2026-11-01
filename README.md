@@ -70,8 +70,16 @@ The exact Java each version needs (8, 17, 21, 25) is found or downloaded automat
 </td>
 <td valign="top">
 
-### 🤖 Hands-off hosting
+### ⏱ Hands-off hosting
 Crash recovery, scheduled restarts with in-game countdowns, smart backups, automatic build updates, Discord/Slack alerts, tray mode and start-with-Windows. Servers keep running when the app is closed.
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top">
+
+### 🤖 A local AI assistant that can actually do things
+Connect **Ollama**, **LM Studio**, llama.cpp or Jan and press **Ctrl+J**. The assistant knows how the app works and sees your servers live: it reads crash reports and logs, explains problems, edits configs, tunes settings, sets up restarts and backups, installs mods – and asks you before every change. Runs entirely on your PC.
 
 </td>
 </tr>
@@ -96,6 +104,7 @@ Crash recovery, scheduled restarts with in-game countdowns, smart backups, autom
 | ![Port forwarding](docs/screenshots/port-forwarding.png) <br> **Port forwarding** – UPnP, firewall, reachability test | ![Console](docs/screenshots/console.png) <br> **Console** – colours, filters, autocomplete |
 | ![Worlds](docs/screenshots/worlds.png) <br> **Worlds** – pre-generation, imports, datapacks | ![Player stats](docs/screenshots/player-stats.png) <br> **Player stats** – play time and more |
 | ![Performance](docs/screenshots/performance.png) <br> **Performance** – TPS, MSPT, CPU and memory | ![Settings](docs/screenshots/settings.png) <br> **Server settings** – MOTD designer and every property |
+| ![AI assistant](docs/screenshots/assistant.png) <br> **AI assistant** – local model, asks before changing anything | ![Health](docs/screenshots/health.png) <br> **Health** – checks with a fix for each |
 
 ## 🧭 Supported server software
 
@@ -120,6 +129,7 @@ Crash recovery, scheduled restarts with in-game countdowns, smart backups, autom
 4. Press **Start**. Share the address from the **Overview**.
 5. For friends outside your home network open **Port Forwarding** → *Forward ports automatically* and *Allow through firewall*, then *Test from the internet*.
 6. Want Bedrock friends too? **Mods & Plugins → Essentials → Bedrock crossplay → Set up**.
+7. Want help? Install [Ollama](https://ollama.com) (`ollama pull qwen3:8b`), press **Ctrl+J** and ask the assistant anything.
 
 The full walkthrough – every screen explained – is in the **[User guide](docs/USER_GUIDE.md)**.
 
@@ -140,12 +150,13 @@ The full walkthrough – every screen explained – is in the **[User guide](doc
 | Server crashes right after start | Open **Health** – it flags client-only mods, wrong-loader mods, wrong Java and known fatal log lines, each with a fix. |
 | Bedrock players can't connect | They use port **19132** (not 25565); forward **UDP 19132** and restart after setting up crossplay. |
 | Lag when people explore | **Worlds → Pre-generate**, add Lithium/FerriteCore/ModernFix from Essentials, lower view distance. |
+| The AI assistant can't connect | Start Ollama (or LM Studio's local server), open the assistant's ⚙ settings, pick the preset and press *Test*. Use a tool-capable model (Qwen 3, Llama 3.1+, gpt-oss, Gemma). |
 
-More answers in the [user guide's troubleshooting section](docs/USER_GUIDE.md#11-troubleshooting).
+More answers in the [user guide's troubleshooting section](docs/USER_GUIDE.md#12-troubleshooting).
 
 ## 🔒 Good to know
 
-- **Your data stays yours.** No accounts, no telemetry. The app only talks to Mojang, the official loader sites, Modrinth/Hangar/CurseForge (when you browse), Eclipse Adoptium (Java), GeyserMC (crossplay) and mcsrvstat.us (only when you press *Test from the internet*).
+- **Your data stays yours.** No accounts, no telemetry. The app only talks to Mojang, the official loader sites, Modrinth/Hangar/CurseForge (when you browse), Eclipse Adoptium (Java), GeyserMC (crossplay) and mcsrvstat.us (only when you press *Test from the internet*). The AI assistant only talks to the AI server address you enter (your own PC by default).
 - **The EULA is your decision** – servers start only after you accept the [Minecraft EULA](https://aka.ms/MinecraftEULA) in the app.
 - **Your router and firewall only change when you click** the buttons for it.
 

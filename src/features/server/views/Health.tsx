@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { AlertTriangle, CheckCircle2, Globe2, Info, Loader2, RefreshCw, Router, ShieldCheck, ShieldPlus, XCircle } from 'lucide-react';
+import { AlertTriangle, Bot, CheckCircle2, Globe2, Info, Loader2, RefreshCw, Router, ShieldCheck, ShieldPlus, XCircle } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { api, errMsg } from '@/lib/ipc';
 import { copy } from '@/lib/shell';
@@ -83,9 +83,14 @@ export function Health({ id }: { id: string }) {
         title="Health"
         description="Checks everything that commonly stops a Minecraft server from starting, lagging or being joinable – EULA, Java, memory, mods, ports, firewall and recent crash reports."
         actions={
-          <Button size="sm" icon={<RefreshCw className={cn('size-3.5', running && 'animate-spin')} />} onClick={load} disabled={running}>
-            Run checks
-          </Button>
+          <div className="flex gap-2">
+            <Button size="sm" icon={<Bot className="size-3.5" />} onClick={() => useApp.getState().askAi(`Run the health check on "${inst.name}", explain every problem in plain words and offer to fix them.`)}>
+              Ask the assistant
+            </Button>
+            <Button size="sm" icon={<RefreshCw className={cn('size-3.5', running && 'animate-spin')} />} onClick={load} disabled={running}>
+              Run checks
+            </Button>
+          </div>
         }
       />
       <Section

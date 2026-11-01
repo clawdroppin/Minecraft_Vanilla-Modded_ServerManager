@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Archive, ArrowRight, ArrowUpCircle, CalendarClock, Check, CircleDashed, Copy, Cpu, Gauge, Globe2, Home, LogIn, LogOut, MemoryStick, MessageSquare, Monitor, Network, Terminal, Trophy, Users } from 'lucide-react';
+import { Archive, ArrowRight, Bot, ArrowUpCircle, CalendarClock, Check, CircleDashed, Copy, Cpu, Gauge, Globe2, Home, LogIn, LogOut, MemoryStick, MessageSquare, Monitor, Network, Terminal, Trophy, Users } from 'lucide-react';
 import { api } from '@/lib/ipc';
 import { cn } from '@/lib/cn';
 import { ago, bytes, clock, duration, until } from '@/lib/format';
@@ -87,6 +87,9 @@ export function Overview({ id }: { id: string }) {
               </Button>
               <Button size="sm" onClick={() => setView(id, 'health')}>
                 Health check
+              </Button>
+              <Button size="sm" icon={<Bot className="size-3.5" />} onClick={() => useApp.getState().askAi(`The server "${inst.name}" crashed (exit code ${st.lastExitCode ?? '?'}). Read the console and crash reports, find the cause and fix it.`)}>
+                Ask the assistant
               </Button>
             </div>
           }

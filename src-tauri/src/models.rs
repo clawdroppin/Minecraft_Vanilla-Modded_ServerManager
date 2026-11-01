@@ -75,6 +75,8 @@ pub struct AppSettings {
     pub webhook_levels: Vec<String>,
     /// Optional CurseForge API key (console.curseforge.com). Empty = CurseForge search off.
     pub curseforge_key: String,
+    /// Local AI assistant (Ollama, LM Studio…).
+    pub ai: crate::core::ai::AiSettings,
 }
 
 impl Default for AppSettings {
@@ -96,6 +98,7 @@ impl Default for AppSettings {
             webhook_url: String::new(),
             webhook_levels: vec!["success".into(), "error".into()],
             curseforge_key: String::new(),
+            ai: Default::default(),
         }
     }
 }

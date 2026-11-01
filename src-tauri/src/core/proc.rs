@@ -70,6 +70,10 @@ pub fn norm(p: &Path) -> String {
 /// True when `path` is `dir` itself or lies inside it. Plain prefix matching would accept
 /// `D:\srv\ab\…` as inside `D:\srv\a`.
 pub fn is_within(path: &Path, dir: &Path) -> bool {
+    // `D:\srv\mc\..\..\Windows` starts with `D:\srv\mc` but isn't inside it.
+    if path.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
+        return false;
+    }
     let (p, d) = (norm(path), norm(dir));
     !d.is_empty() && (p == d || p.starts_with(&format!("{d}\\")))
 }
@@ -306,5 +310,6 @@ mod tests {
         assert!(is_within(Path::new(r"D:\srv\a\Backups\x.zip"), Path::new(r"d:\SRV\a")));
         assert!(!is_within(Path::new(r"D:\srv\ab\x.zip"), Path::new(r"D:\srv\a")));
         assert!(is_within(Path::new(r"D:\srv\a"), Path::new(r"D:\srv\a\")));
+        assert!(!is_within(Path::new(r"D:\srv\a\..\..\Windows\win.ini"), Path::new(r"D:\srv\a")));
     }
 }
